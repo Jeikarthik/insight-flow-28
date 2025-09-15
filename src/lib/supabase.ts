@@ -1,13 +1,36 @@
 import { createClient } from '@supabase/supabase-js';
 
-const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
-const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
+let supabaseClient: any | null = null;
 
-if (!supabaseUrl || !supabaseAnonKey) {
-  throw new Error('Missing Supabase environment variables');
+function resolveConfig() {
+  const url = typeof window !== 'undefined' ? localStorage.getItem('supabaseUrl') : null;
+  const anonKey = typeof window !== 'undefined' ? localStorage.getItem('supabaseAnonKey') : null;
+  const env = (typeof import.meta !== 'undefined' && (import.meta as any).env) ? (import.meta as any).env : undefined;
+  return {
+    url: url || env?.VITE_SUPABASE_URL,
+    anonKey: anonKey || env?.VITE_SUPABASE_ANON_KEY,
+  } as { url?: string; anonKey?: string };
 }
 
-export const supabase = createClient(supabaseUrl, supabaseAnonKey);
+export function initSupabase(url?: string, anonKey?: string) {
+  const cfg = resolveConfig();
+  const finalUrl = url ?? cfg.url;
+  const finalKey = anonKey ?? cfg.anonKey;
+  if (finalUrl && finalKey) {
+    supabaseClient = createClient(finalUrl as string, finalKey as string);
+  }
+  return supabaseClient;
+}
+
+export function getSupabase() {
+  if (supabaseClient) return supabaseClient;
+  const { url, anonKey } = resolveConfig();
+  if (url && anonKey) {
+    supabaseClient = createClient(url as string, anonKey as string);
+    return supabaseClient;
+  }
+  return null;
+}
 
 // Database types for TypeScript
 export interface Profile {

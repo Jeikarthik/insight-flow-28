@@ -1,6 +1,6 @@
 import { createContext, useContext, useEffect, useState } from 'react';
 import { User, Session } from '@supabase/supabase-js';
-import { supabase, Profile } from '@/lib/supabase';
+import { getSupabase, Profile } from '@/lib/supabase';
 
 interface AuthContextType {
   user: User | null;
@@ -22,8 +22,15 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    const sb = getSupabase();
+    if (!sb) {
+      console.warn('Supabase not configured. Skipping auth initialization.');
+      setLoading(false);
+      return;
+    }
+
     // Get initial session
-    supabase.auth.getSession().then(({ data: { session } }) => {
+    sb.auth.getSession().then(({ data: { session } }) => {
       setSession(session);
       setUser(session?.user ?? null);
       if (session?.user) {
@@ -36,7 +43,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     // Listen for auth changes
     const {
       data: { subscription },
-    } = supabase.auth.onAuthStateChange(async (_event, session) => {
+    } = sb.auth.onAuthStateChange(async (_event, session) => {
       setSession(session);
       setUser(session?.user ?? null);
       if (session?.user) {
@@ -51,8 +58,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   const fetchProfile = async (userId: string) => {
+    const sb = getSupabase();
+    if (!sb) {
+      setLoading(false);
+      return;
+    }
     try {
-      const { data, error } = await supabase
+      const { data, error } = await sb
         .from('profiles')
         .select('*')
         .eq('id', userId)
@@ -71,7 +83,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   };
 
   const signIn = async (email: string, password: string) => {
-    const { error } = await supabase.auth.signInWithPassword({
+    const sb = getSupabase();
+    if (!sb) return { error: new Error('Supabase not configured') };
+    const { error } = await sb.auth.signInWithPassword({
       email,
       password,
     });
@@ -79,7 +93,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   };
 
   const signUp = async (email: string, password: string, fullName: string) => {
-    const { error } = await supabase.auth.signUp({
+    const sb = getSupabase();
+    if (!sb) return { error: new Error('Supabase not configured') };
+    const { error } = await sb.auth.signUp({
       email,
       password,
       options: {
@@ -92,13 +108,17 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   };
 
   const signOut = async () => {
-    await supabase.auth.signOut();
+    const sb = getSupabase();
+    if (!sb) return;
+    await sb.auth.signOut();
   };
 
   const updateProfile = async (updates: Partial<Profile>) => {
     if (!user) return { error: new Error('No user logged in') };
+    const sb = getSupabase();
+    if (!sb) return { error: new Error('Supabase not configured') };
 
-    const { error } = await supabase
+    const { error } = await sb
       .from('profiles')
       .update(updates)
       .eq('id', user.id);

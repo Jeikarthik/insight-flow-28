@@ -8,7 +8,7 @@ import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/hooks/useAuth';
-import { supabase } from '@/lib/supabase';
+import { getSupabase } from '@/lib/supabase';
 import { 
   Settings, 
   Key, 
@@ -136,7 +136,11 @@ export function SettingsPage() {
 
   const loadApiSettings = async () => {
     try {
-      const { data, error } = await supabase
+      const sb = getSupabase();
+      if (!sb) {
+        throw new Error('Supabase not configured');
+      }
+      const { data, error } = await sb
         .from('system_settings')
         .select('*')
         .order('key');
@@ -159,7 +163,11 @@ export function SettingsPage() {
   const saveApiSetting = async (key: string, value: string, description: string, is_sensitive: boolean) => {
     setSaving(true);
     try {
-      const { error } = await supabase
+      const sb = getSupabase();
+      if (!sb) {
+        throw new Error('Supabase not configured');
+      }
+      const { error } = await sb
         .from('system_settings')
         .upsert({
           key,
