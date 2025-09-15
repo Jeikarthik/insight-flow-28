@@ -1,6 +1,7 @@
 import { Card, CardContent } from "@/components/ui/card";
 import { LucideIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { toast } from "@/hooks/use-toast";
 
 interface StatsCardProps {
   title: string;
@@ -9,6 +10,7 @@ interface StatsCardProps {
   icon: LucideIcon;
   trend?: "up" | "down" | "neutral";
   className?: string;
+  onClick?: () => void;
 }
 
 export function StatsCard({ 
@@ -17,10 +19,28 @@ export function StatsCard({
   description, 
   icon: Icon, 
   trend = "neutral",
-  className 
+  className,
+  onClick 
 }: StatsCardProps) {
+  const handleClick = () => {
+    if (onClick) {
+      onClick();
+    } else {
+      toast({ 
+        title: "Stats Details", 
+        description: `Viewing detailed analytics for ${title.toLowerCase()}...` 
+      });
+    }
+  };
+
   return (
-    <Card className={cn("bg-gradient-card shadow-soft hover:shadow-medium transition-all duration-300", className)}>
+    <Card 
+      className={cn(
+        "bg-gradient-card shadow-soft hover:shadow-medium transition-all duration-300 cursor-pointer", 
+        className
+      )}
+      onClick={handleClick}
+    >
       <CardContent className="p-6">
         <div className="flex items-center justify-between">
           <div className="flex-1">

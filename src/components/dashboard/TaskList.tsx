@@ -1,9 +1,11 @@
+import { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Clock, FileText, AlertCircle, CheckCircle2 } from "lucide-react";
+import { Clock, FileText, AlertCircle, CheckCircle2, Play, Check } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { toast } from "@/hooks/use-toast";
 
 interface Task {
   id: string;
@@ -74,6 +76,27 @@ const getTypeIcon = (type: Task["type"]) => {
 };
 
 export function TaskList() {
+  const [taskList, setTaskList] = useState(tasks);
+
+  const handleTaskAction = (taskId: string, action: "start" | "complete") => {
+    setTaskList(prev => prev.map(task => {
+      if (task.id === taskId) {
+        if (action === "start") {
+          toast({ title: "Task Started", description: `Started working on: ${task.title}` });
+          return { ...task, status: "in-progress" as const };
+        } else {
+          toast({ title: "Task Completed", description: `Completed: ${task.title}` });
+          return { ...task, status: "completed" as const };
+        }
+      }
+      return task;
+    }));
+  };
+
+  const handleViewAllTasks = () => {
+    toast({ title: "Navigation", description: "Opening full task management view..." });
+  };
+
   return (
     <Card className="bg-gradient-card shadow-soft">
       <CardHeader>
@@ -84,7 +107,7 @@ export function TaskList() {
       </CardHeader>
       <CardContent className="p-6 pt-0">
         <div className="space-y-4">
-          {tasks.map((task) => {
+          {taskList.map((task) => {
             const StatusIcon = getStatusIcon(task.status);
             const TypeIcon = getTypeIcon(task.type);
             
@@ -134,6 +157,28 @@ export function TaskList() {
                       <span className="text-xs text-muted-foreground">
                         Due {task.dueDate}
                       </span>
+                      {task.status === "pending" && (
+                        <Button 
+                          size="sm" 
+                          variant="outline" 
+                          className="h-6 px-2 ml-2"
+                          onClick={() => handleTaskAction(task.id, "start")}
+                        >
+                          <Play className="h-3 w-3 mr-1" />
+                          Start
+                        </Button>
+                      )}
+                      {task.status === "in-progress" && (
+                        <Button 
+                          size="sm" 
+                          variant="outline" 
+                          className="h-6 px-2 ml-2"
+                          onClick={() => handleTaskAction(task.id, "complete")}
+                        >
+                          <Check className="h-3 w-3 mr-1" />
+                          Done
+                        </Button>
+                      )}
                     </div>
                   </div>
                 </div>
@@ -141,7 +186,7 @@ export function TaskList() {
             );
           })}
           
-          <Button variant="outline" className="w-full mt-4">
+          <Button variant="outline" className="w-full mt-4" onClick={handleViewAllTasks}>
             View All Tasks
           </Button>
         </div>
