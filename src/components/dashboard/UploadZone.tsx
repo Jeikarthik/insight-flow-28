@@ -104,7 +104,48 @@ export function UploadZone() {
           <p className="text-muted-foreground mb-4">
             Support for PDF, DOCX, images, and more
           </p>
-          <Button>Browse Files</Button>
+          <input
+            type="file"
+            multiple
+            onChange={(e) => {
+              const selectedFiles = Array.from(e.target.files || []);
+              const newFiles: UploadedFile[] = selectedFiles.map((file, index) => ({
+                id: `${Date.now()}-${index}`,
+                name: file.name,
+                size: (file.size / 1024 / 1024).toFixed(2) + " MB",
+                type: file.type || "Unknown",
+                progress: 0,
+                status: "uploading"
+              }));
+
+              setFiles(prev => [...prev, ...newFiles]);
+
+              // Simulate upload progress
+              newFiles.forEach((file) => {
+                const interval = setInterval(() => {
+                  setFiles(prev => prev.map(f => {
+                    if (f.id === file.id) {
+                      const newProgress = f.progress + 10;
+                      if (newProgress >= 100) {
+                        clearInterval(interval);
+                        return { ...f, progress: 100, status: "completed" };
+                      }
+                      return { ...f, progress: newProgress };
+                    }
+                    return f;
+                  }));
+                }, 200);
+              });
+            }}
+            className="hidden"
+            id="file-upload"
+            accept=".pdf,.doc,.docx,.txt,.png,.jpg,.jpeg"
+          />
+          <Button asChild>
+            <label htmlFor="file-upload" className="cursor-pointer">
+              Browse Files
+            </label>
+          </Button>
         </div>
 
         {files.length > 0 && (

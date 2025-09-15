@@ -1,35 +1,98 @@
-import { createClient } from '@supabase/supabase-js';
-
-let supabaseClient: any | null = null;
-
-function resolveConfig() {
-  const url = typeof window !== 'undefined' ? localStorage.getItem('supabaseUrl') : null;
-  const anonKey = typeof window !== 'undefined' ? localStorage.getItem('supabaseAnonKey') : null;
-  const env = (typeof import.meta !== 'undefined' && (import.meta as any).env) ? (import.meta as any).env : undefined;
-  return {
-    url: url || env?.VITE_SUPABASE_URL,
-    anonKey: anonKey || env?.VITE_SUPABASE_ANON_KEY,
-  } as { url?: string; anonKey?: string };
-}
-
-export function initSupabase(url?: string, anonKey?: string) {
-  const cfg = resolveConfig();
-  const finalUrl = url ?? cfg.url;
-  const finalKey = anonKey ?? cfg.anonKey;
-  if (finalUrl && finalKey) {
-    supabaseClient = createClient(finalUrl as string, finalKey as string);
-  }
-  return supabaseClient;
-}
-
+// Mock Supabase client for development
 export function getSupabase() {
-  if (supabaseClient) return supabaseClient;
-  const { url, anonKey } = resolveConfig();
-  if (url && anonKey) {
-    supabaseClient = createClient(url as string, anonKey as string);
-    return supabaseClient;
-  }
-  return null;
+  return {
+    auth: {
+      signUp: async ({ email, password, options }: any) => {
+        await new Promise(resolve => setTimeout(resolve, 1000));
+        return { 
+          data: { 
+            user: { 
+              id: '1', 
+              email, 
+              user_metadata: { full_name: options?.data?.full_name || 'Mock User' } 
+            }
+          }, 
+          error: null 
+        };
+      },
+      signInWithPassword: async ({ email, password }: any) => {
+        await new Promise(resolve => setTimeout(resolve, 1000));
+        return { 
+          data: { 
+            user: { 
+              id: '1', 
+              email, 
+              user_metadata: { full_name: 'Mock User' } 
+            }
+          }, 
+          error: null 
+        };
+      },
+      signOut: async () => {
+        await new Promise(resolve => setTimeout(resolve, 500));
+        return { error: null };
+      },
+      getSession: async () => {
+        return { 
+          data: { 
+            session: { 
+              user: { 
+                id: '1', 
+                email: 'user@example.com', 
+                user_metadata: { full_name: 'Mock User' } 
+              }
+            } 
+          }, 
+          error: null 
+        };
+      },
+      onAuthStateChange: (callback: Function) => {
+        setTimeout(() => {
+          callback('SIGNED_IN', { 
+            user: { 
+              id: '1', 
+              email: 'user@example.com', 
+              user_metadata: { full_name: 'Mock User' } 
+            }
+          });
+        }, 100);
+        return { data: { subscription: { unsubscribe: () => {} } } };
+      }
+    },
+    from: (table: string) => ({
+      select: (columns?: string) => ({
+        eq: (column?: string, value?: any) => ({ 
+          single: () => ({
+            data: { 
+              id: '1', 
+              email: 'user@example.com', 
+              full_name: 'Mock User',
+              role: 'admin',
+              created_at: new Date().toISOString(),
+              updated_at: new Date().toISOString()
+            }, 
+            error: null 
+          }),
+          order: (column?: string, options?: any) => ({
+            data: [],
+            error: null
+          }),
+          data: [], 
+          error: null 
+        }),
+        data: [], 
+        error: null 
+      }),
+      insert: (data?: any) => ({ data: null, error: null }),
+      update: (data?: any) => ({ eq: (column?: string, value?: any) => ({ data: null, error: null }) }),
+      delete: () => ({ eq: (column?: string, value?: any) => ({ data: null, error: null }) }),
+      upsert: (data?: any) => ({ data: null, error: null })
+    })
+  };
+}
+
+export function initSupabase() {
+  return getSupabase();
 }
 
 // Database types for TypeScript

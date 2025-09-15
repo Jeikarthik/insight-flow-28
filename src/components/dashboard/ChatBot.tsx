@@ -41,18 +41,33 @@ export function ChatBot() {
     setInput("");
     setIsTyping(true);
 
-    // Simulate AI response
+    // Mock AI responses based on input
     setTimeout(() => {
+      let response = "Thanks for your message! I'm here to help you with document management and task organization.";
+      
+      const inputLower = input.toLowerCase();
+      if (inputLower.includes('task') || inputLower.includes('todo')) {
+        response = "I can help you create and manage tasks! You currently have 3 pending tasks and 12 completed ones. Would you like me to create a new task or show you details about existing ones?";
+      } else if (inputLower.includes('document') || inputLower.includes('file')) {
+        response = "You have 24 documents uploaded. I can help you search through them, extract information, or organize them by categories. What would you like to do?";
+      } else if (inputLower.includes('summary') || inputLower.includes('overview')) {
+        response = "Here's a quick overview: You have 24 documents uploaded, 3 pending tasks, and 5 active users in your workspace. Your document processing is running smoothly with a 98% success rate.";
+      } else if (inputLower.includes('help')) {
+        response = "I can help you with:\n• Document upload and processing\n• Task creation and management\n• Data analysis and insights\n• Workflow automation\n• Integration setup\n\nWhat would you like assistance with?";
+      } else if (inputLower.includes('upload')) {
+        response = "To upload documents, you can drag and drop them into the upload zone on the left, or click 'Browse Files' to select them. I support PDF, DOCX, images, and many other formats!";
+      }
+
       const botMessage: Message = {
         id: `bot-${Date.now()}`,
-        content: `I understand you're asking about "${input}". Based on your document library, I can help you with that. Let me analyze the relevant documents and provide you with a comprehensive summary.`,
+        content: response,
         sender: "bot",
         timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
       };
       
       setMessages(prev => [...prev, botMessage]);
       setIsTyping(false);
-    }, 2000);
+    }, 1500);
   };
 
   const handleKeyPress = (e: React.KeyboardEvent) => {

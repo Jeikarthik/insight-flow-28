@@ -142,8 +142,8 @@ export function SettingsPage() {
       }
       const { data, error } = await sb
         .from('system_settings')
-        .select('*')
-        .order('key');
+        .select()
+        .eq();
 
       if (error) throw error;
 
@@ -169,7 +169,7 @@ export function SettingsPage() {
       }
       const { error } = await sb
         .from('system_settings')
-        .upsert({
+        .insert({
           key,
           value,
           description,

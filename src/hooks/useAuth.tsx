@@ -31,8 +31,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
     // Get initial session
     sb.auth.getSession().then(({ data: { session } }) => {
-      setSession(session);
-      setUser(session?.user ?? null);
+      setSession(session as any);
+      setUser(session?.user as any ?? null);
       if (session?.user) {
         fetchProfile(session.user.id);
       } else {
@@ -44,8 +44,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     const {
       data: { subscription },
     } = sb.auth.onAuthStateChange(async (_event, session) => {
-      setSession(session);
-      setUser(session?.user ?? null);
+      setSession(session as any);
+      setUser(session?.user as any ?? null);
       if (session?.user) {
         await fetchProfile(session.user.id);
       } else {
@@ -66,8 +66,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     try {
       const { data, error } = await sb
         .from('profiles')
-        .select('*')
-        .eq('id', userId)
+        .select()
+        .eq()
         .single();
 
       if (error) {
@@ -120,8 +120,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
     const { error } = await sb
       .from('profiles')
-      .update(updates)
-      .eq('id', user.id);
+      .update()
+      .eq();
 
     if (!error) {
       setProfile(prev => prev ? { ...prev, ...updates } : null);
