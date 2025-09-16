@@ -1,10 +1,49 @@
+import { useState } from "react";
 import { Header } from "@/components/layout/Header";
 import { Sidebar } from "@/components/layout/Sidebar";
 import { TaskList } from "@/components/dashboard/TaskList";
 import { StatsCard } from "@/components/dashboard/StatsCard";
 import { CheckSquare, Clock, AlertTriangle, CheckCircle } from "lucide-react";
+import { useApp } from "@/contexts/AppContext";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 
 export default function TasksPage() {
+  const { tasks } = useApp();
+  const [selectedFilter, setSelectedFilter] = useState<string | null>(null);
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
+
+  const handleStatsClick = (filterType: string) => {
+    setSelectedFilter(filterType);
+    setIsDialogOpen(true);
+  };
+
+  const getFilteredTasks = () => {
+    if (!selectedFilter) return tasks;
+    
+    switch (selectedFilter) {
+      case "Total Tasks":
+        return tasks;
+      case "In Progress":
+        return tasks.filter(task => task.status === "in-progress");
+      case "High Priority":
+        return tasks.filter(task => task.priority === "high");
+      case "Completed":
+        return tasks.filter(task => task.status === "completed");
+      default:
+        return tasks;
+    }
+  };
+
+  const getPriorityColor = (priority: "high" | "medium" | "low") => {
+    switch (priority) {
+      case "high": return "destructive";
+      case "medium": return "secondary"; 
+      case "low": return "outline";
+    }
+  };
   return (
     <div className="flex h-screen bg-background">
       <Sidebar />
@@ -25,31 +64,35 @@ export default function TasksPage() {
             <div className="grid gap-6 md:grid-cols-4">
               <StatsCard
                 title="Total Tasks"
-                value="15"
+                value={tasks.length.toString()}
                 description="+2 from last week"
                 icon={CheckSquare}
                 trend="up"
+                onClick={() => handleStatsClick("Total Tasks")}
               />
               <StatsCard
                 title="In Progress"
-                value="3"
+                value={tasks.filter(t => t.status === "in-progress").length.toString()}
                 description="Currently active"
                 icon={Clock}
                 trend="neutral"
+                onClick={() => handleStatsClick("In Progress")}
               />
               <StatsCard
                 title="High Priority"
-                value="2"
+                value={tasks.filter(t => t.priority === "high").length.toString()}
                 description="Need attention"
                 icon={AlertTriangle}
                 trend="down"
+                onClick={() => handleStatsClick("High Priority")}
               />
               <StatsCard
                 title="Completed"
-                value="12"
+                value={tasks.filter(t => t.status === "completed").length.toString()}
                 description="This month"
                 icon={CheckCircle}
                 trend="up"
+                onClick={() => handleStatsClick("Completed")}
               />
             </div>
 
@@ -60,6 +103,45 @@ export default function TasksPage() {
           </div>
         </main>
       </div>
+      
+      <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+        <DialogContent className="max-w-4xl max-h-[80vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>{selectedFilter} - {getFilteredTasks().length} Tasks</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4 mt-4">
+            {getFilteredTasks().map((task) => (
+              <Card key={task.id} className="hover:shadow-soft transition-all duration-300">
+                <CardContent className="p-4">
+                  <div className="flex items-start justify-between mb-3">
+                    <h4 className="font-semibold">{task.title}</h4>
+                    <Badge variant={getPriorityColor(task.priority)}>
+                      {task.priority}
+                    </Badge>
+                  </div>
+                  <p className="text-sm text-muted-foreground mb-3">
+                    {task.description}
+                  </p>
+                  <div className="flex items-center justify-between text-xs">
+                    <span className="text-muted-foreground">Assigned to: {task.assignee}</span>
+                    <div className="flex items-center gap-2">
+                      <span className="text-muted-foreground">Due: {task.dueDate}</span>
+                      <Badge variant="outline" className="text-xs">
+                        {task.status}
+                      </Badge>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            ))}
+            {getFilteredTasks().length === 0 && (
+              <div className="text-center py-8 text-muted-foreground">
+                No tasks found for this filter.
+              </div>
+            )}
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

@@ -22,30 +22,38 @@ const initialMessages: Message[] = [
   }
 ];
 
-export function ChatBot() {
+interface ChatBotProps {
+  externalInput?: string;
+  onInputChange?: (value: string) => void;
+}
+
+export function ChatBot({ externalInput, onInputChange }: ChatBotProps = {}) {
   const [messages, setMessages] = useState<Message[]>(initialMessages);
   const [input, setInput] = useState("");
   const [isTyping, setIsTyping] = useState(false);
+  
+  const inputValue = externalInput !== undefined ? externalInput : input;
+  const handleInputChange = onInputChange || setInput;
 
   const handleSend = () => {
-    if (!input.trim()) return;
+    if (!inputValue.trim()) return;
 
     const userMessage: Message = {
       id: `user-${Date.now()}`,
-      content: input,
+      content: inputValue,
       sender: "user",
       timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
     };
 
     setMessages(prev => [...prev, userMessage]);
-    setInput("");
+    handleInputChange("");
     setIsTyping(true);
 
     // Mock AI responses based on input
     setTimeout(() => {
       let response = "Thanks for your message! I'm here to help you with document management and task organization.";
       
-      const inputLower = input.toLowerCase();
+      const inputLower = inputValue.toLowerCase();
       if (inputLower.includes('task') || inputLower.includes('todo')) {
         response = "I can help you create and manage tasks! You currently have 3 pending tasks and 12 completed ones. Would you like me to create a new task or show you details about existing ones?";
       } else if (inputLower.includes('document') || inputLower.includes('file')) {
@@ -150,8 +158,8 @@ export function ChatBot() {
           <div className="flex gap-2">
             <Input
               placeholder="Ask me anything about your documents..."
-              value={input}
-              onChange={(e) => setInput(e.target.value)}
+              value={inputValue}
+              onChange={(e) => handleInputChange(e.target.value)}
               onKeyPress={handleKeyPress}
               className="flex-1"
             />

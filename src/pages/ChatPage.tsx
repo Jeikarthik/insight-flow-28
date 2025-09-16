@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { Header } from "@/components/layout/Header";
 import { Sidebar } from "@/components/layout/Sidebar";
 import { ChatBot } from "@/components/dashboard/ChatBot";
@@ -5,6 +6,11 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { MessageSquare, Bot, Zap, Brain } from "lucide-react";
 
 export default function ChatPage() {
+  const [chatInput, setChatInput] = useState("");
+
+  const handleQuickAction = (action: string) => {
+    setChatInput(action);
+  };
   return (
     <div className="flex h-screen bg-background">
       <Sidebar />
@@ -25,7 +31,7 @@ export default function ChatPage() {
             <div className="grid gap-6 lg:grid-cols-3">
               <div className="lg:col-span-2">
                 <div style={{ height: "600px" }}>
-                  <ChatBot />
+                  <ChatBot externalInput={chatInput} onInputChange={setChatInput} />
                 </div>
               </div>
               
@@ -73,16 +79,28 @@ export default function ChatPage() {
                     <CardTitle className="text-sm">Quick Actions</CardTitle>
                   </CardHeader>
                   <CardContent className="space-y-2">
-                    <button className="w-full text-left p-2 text-sm hover:bg-muted rounded-md">
+                    <button 
+                      className="w-full text-left p-2 text-sm hover:bg-muted rounded-md transition-colors"
+                      onClick={() => handleQuickAction("Summarize today's uploads")}
+                    >
                       "Summarize today's uploads"
                     </button>
-                    <button className="w-full text-left p-2 text-sm hover:bg-muted rounded-md">
+                    <button 
+                      className="w-full text-left p-2 text-sm hover:bg-muted rounded-md transition-colors"
+                      onClick={() => handleQuickAction("Show pending tasks")}
+                    >
                       "Show pending tasks"
                     </button>
-                    <button className="w-full text-left p-2 text-sm hover:bg-muted rounded-md">
+                    <button 
+                      className="w-full text-left p-2 text-sm hover:bg-muted rounded-md transition-colors"
+                      onClick={() => handleQuickAction("Create a new task")}
+                    >
                       "Create a new task"
                     </button>
-                    <button className="w-full text-left p-2 text-sm hover:bg-muted rounded-md">
+                    <button 
+                      className="w-full text-left p-2 text-sm hover:bg-muted rounded-md transition-colors"
+                      onClick={() => handleQuickAction("Analyze document patterns")}
+                    >
                       "Analyze document patterns"
                     </button>
                   </CardContent>
