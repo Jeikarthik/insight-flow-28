@@ -7,40 +7,11 @@ import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { FileText, Search, Filter, Download, Eye, Trash2 } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
-
-const mockDocuments = [
-  {
-    id: "1",
-    name: "Contract_Q4_2024.pdf",
-    type: "PDF",
-    size: "2.4 MB",
-    uploadDate: "2024-01-10",
-    status: "processed",
-    tags: ["contract", "legal"]
-  },
-  {
-    id: "2", 
-    name: "Medical_Records_Batch_847.docx",
-    type: "DOCX",
-    size: "1.8 MB",
-    uploadDate: "2024-01-09",
-    status: "processing",
-    tags: ["medical", "records"]
-  },
-  {
-    id: "3",
-    name: "Invoice_January_2024.xlsx",
-    type: "XLSX", 
-    size: "856 KB",
-    uploadDate: "2024-01-08",
-    status: "processed",
-    tags: ["finance", "invoice"]
-  }
-];
+import { useApp } from "@/contexts/AppContext";
 
 export default function DocumentsPage() {
   const [searchTerm, setSearchTerm] = useState("");
-  const [documents] = useState(mockDocuments);
+  const { documents } = useApp();
 
   const handleDocumentAction = (action: string, docName: string) => {
     toast({

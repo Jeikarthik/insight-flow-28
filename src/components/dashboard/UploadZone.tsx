@@ -5,6 +5,8 @@ import { Progress } from "@/components/ui/progress";
 import { Badge } from "@/components/ui/badge";
 import { Upload, File, X, CheckCircle } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { toast } from "@/hooks/use-toast";
+import { useApp } from "@/contexts/AppContext";
 
 interface UploadedFile {
   id: string;
@@ -18,6 +20,7 @@ interface UploadedFile {
 export function UploadZone() {
   const [isDragging, setIsDragging] = useState(false);
   const [files, setFiles] = useState<UploadedFile[]>([]);
+  const { addTask, addDocument } = useApp();
 
   const handleDragOver = useCallback((e: React.DragEvent) => {
     e.preventDefault();
@@ -29,12 +32,8 @@ export function UploadZone() {
     setIsDragging(false);
   }, []);
 
-  const handleDrop = useCallback((e: React.DragEvent) => {
-    e.preventDefault();
-    setIsDragging(false);
-    
-    const droppedFiles = Array.from(e.dataTransfer.files);
-    const newFiles: UploadedFile[] = droppedFiles.map((file, index) => ({
+  const processFiles = (fileList: File[]) => {
+    const newFiles: UploadedFile[] = fileList.map((file, index) => ({
       id: `${Date.now()}-${index}`,
       name: file.name,
       size: (file.size / 1024 / 1024).toFixed(2) + " MB",
@@ -45,14 +44,46 @@ export function UploadZone() {
 
     setFiles(prev => [...prev, ...newFiles]);
 
-    // Simulate upload progress
+    // Simulate upload progress and add to global state
     newFiles.forEach((file) => {
       const interval = setInterval(() => {
         setFiles(prev => prev.map(f => {
           if (f.id === file.id) {
-            const newProgress = f.progress + 10;
+            const newProgress = f.progress + Math.random() * 15;
             if (newProgress >= 100) {
               clearInterval(interval);
+              
+              // Add to global state when processing is complete
+              const fileExtension = file.name.split('.').pop()?.toUpperCase() || 'UNKNOWN';
+              const tags = getFileTags(fileExtension, file.name);
+              
+              // Add document to global state
+              addDocument({
+                name: file.name,
+                type: fileExtension,
+                size: file.size,
+                uploadDate: new Date().toISOString().split('T')[0],
+                status: 'processing',
+                tags
+              });
+
+              // Add corresponding task
+              addTask({
+                title: `Process ${file.name}`,
+                description: `Analyze and extract data from ${file.name}`,
+                priority: 'medium',
+                dueDate: new Date(Date.now() + 3 * 24 * 60 * 60 * 1000).toISOString().split('T')[0], // 3 days from now
+                assignee: 'Processing Team',
+                status: 'pending',
+                type: 'document-processing'
+              });
+
+              // Show notification
+              toast({
+                title: "New Task Created",
+                description: `Processing task created for ${file.name}`,
+              });
+
               return { ...f, progress: 100, status: "completed" };
             }
             return { ...f, progress: newProgress };
@@ -61,7 +92,42 @@ export function UploadZone() {
         }));
       }, 200);
     });
-  }, []);
+
+    toast({
+      title: "Files Uploaded",
+      description: `${newFiles.length} file(s) uploaded successfully`,
+    });
+  };
+
+  const getFileTags = (extension: string, filename: string): string[] => {
+    const tags: string[] = [];
+    
+    // Add extension-based tags
+    if (['PDF', 'DOC', 'DOCX'].includes(extension)) {
+      tags.push('document');
+    }
+    if (['XLS', 'XLSX', 'CSV'].includes(extension)) {
+      tags.push('spreadsheet');
+    }
+    if (['JPG', 'JPEG', 'PNG'].includes(extension)) {
+      tags.push('image');
+    }
+
+    // Add filename-based tags
+    const lowerName = filename.toLowerCase();
+    if (lowerName.includes('contract')) tags.push('contract', 'legal');
+    if (lowerName.includes('invoice')) tags.push('invoice', 'finance');
+    if (lowerName.includes('medical')) tags.push('medical', 'records');
+    if (lowerName.includes('report')) tags.push('report', 'analysis');
+
+    return tags.length > 0 ? tags : ['general'];
+  };
+
+  const handleDrop = useCallback((e: React.DragEvent) => {
+    e.preventDefault();
+    setIsDragging(false);
+    processFiles(Array.from(e.dataTransfer.files));
+  }, [addTask, addDocument]);
 
   const removeFile = (id: string) => {
     setFiles(prev => prev.filter(f => f.id !== id));
@@ -109,33 +175,7 @@ export function UploadZone() {
             multiple
             onChange={(e) => {
               const selectedFiles = Array.from(e.target.files || []);
-              const newFiles: UploadedFile[] = selectedFiles.map((file, index) => ({
-                id: `${Date.now()}-${index}`,
-                name: file.name,
-                size: (file.size / 1024 / 1024).toFixed(2) + " MB",
-                type: file.type || "Unknown",
-                progress: 0,
-                status: "uploading"
-              }));
-
-              setFiles(prev => [...prev, ...newFiles]);
-
-              // Simulate upload progress
-              newFiles.forEach((file) => {
-                const interval = setInterval(() => {
-                  setFiles(prev => prev.map(f => {
-                    if (f.id === file.id) {
-                      const newProgress = f.progress + 10;
-                      if (newProgress >= 100) {
-                        clearInterval(interval);
-                        return { ...f, progress: 100, status: "completed" };
-                      }
-                      return { ...f, progress: newProgress };
-                    }
-                    return f;
-                  }));
-                }, 200);
-              });
+              processFiles(selectedFiles);
             }}
             className="hidden"
             id="file-upload"

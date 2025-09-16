@@ -1,61 +1,13 @@
-import { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Clock, FileText, AlertCircle, CheckCircle2, Play, Check } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { toast } from "@/hooks/use-toast";
+import { useApp } from "@/contexts/AppContext";
 
-interface Task {
-  id: string;
-  title: string;
-  description: string;
-  priority: "high" | "medium" | "low";
-  dueDate: string;
-  assignee: {
-    name: string;
-    avatar?: string;
-    initials: string;
-  };
-  status: "pending" | "in-progress" | "completed";
-  type: "review" | "approval" | "classification" | "deadline";
-}
-
-const tasks: Task[] = [
-  {
-    id: "1",
-    title: "Review Contract Documents",
-    description: "Legal team contract review for Q4 partnerships",
-    priority: "high",
-    dueDate: "2024-01-15",
-    assignee: { name: "Sarah Johnson", initials: "SJ" },
-    status: "pending",
-    type: "review"
-  },
-  {
-    id: "2", 
-    title: "Classify Medical Records",
-    description: "Process and classify patient documents from upload batch #847",
-    priority: "medium",
-    dueDate: "2024-01-16",
-    assignee: { name: "Dr. Smith", initials: "DS" },
-    status: "in-progress",
-    type: "classification"
-  },
-  {
-    id: "3",
-    title: "Invoice Approval Needed", 
-    description: "Finance department approval for vendor invoices",
-    priority: "high",
-    dueDate: "2024-01-14",
-    assignee: { name: "Mike Chen", initials: "MC" },
-    status: "pending",
-    type: "approval"
-  }
-];
-
-const getPriorityColor = (priority: Task["priority"]) => {
+const getPriorityColor = (priority: "high" | "medium" | "low") => {
   switch (priority) {
     case "high": return "destructive";
     case "medium": return "secondary"; 
@@ -63,7 +15,7 @@ const getPriorityColor = (priority: Task["priority"]) => {
   }
 };
 
-const getStatusIcon = (status: Task["status"]) => {
+const getStatusIcon = (status: "pending" | "in-progress" | "completed") => {
   switch (status) {
     case "completed": return CheckCircle2;
     case "in-progress": return Clock;
@@ -71,26 +23,22 @@ const getStatusIcon = (status: Task["status"]) => {
   }
 };
 
-const getTypeIcon = (type: Task["type"]) => {
+const getTypeIcon = () => {
   return FileText;
 };
 
 export function TaskList() {
-  const [taskList, setTaskList] = useState(tasks);
+  const { tasks, updateTaskStatus } = useApp();
 
   const handleTaskAction = (taskId: string, action: "start" | "complete") => {
-    setTaskList(prev => prev.map(task => {
-      if (task.id === taskId) {
-        if (action === "start") {
-          toast({ title: "Task Started", description: `Started working on: ${task.title}` });
-          return { ...task, status: "in-progress" as const };
-        } else {
-          toast({ title: "Task Completed", description: `Completed: ${task.title}` });
-          return { ...task, status: "completed" as const };
-        }
-      }
-      return task;
-    }));
+    const newStatus = action === "start" ? "in-progress" : "completed";
+    updateTaskStatus(taskId, newStatus);
+
+    const task = tasks.find(t => t.id === taskId);
+    toast({
+      title: `Task ${action === "start" ? "Started" : "Completed"}`,
+      description: `"${task?.title}" has been ${action === "start" ? "started" : "marked as complete"}`,
+    });
   };
 
   const handleViewAllTasks = () => {
@@ -107,9 +55,9 @@ export function TaskList() {
       </CardHeader>
       <CardContent className="p-6 pt-0">
         <div className="space-y-4">
-          {taskList.map((task) => {
+          {tasks.slice(0, 4).map((task) => {
             const StatusIcon = getStatusIcon(task.status);
-            const TypeIcon = getTypeIcon(task.type);
+            const TypeIcon = getTypeIcon();
             
             return (
               <div 
@@ -137,13 +85,12 @@ export function TaskList() {
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-2">
                       <Avatar className="h-6 w-6">
-                        <AvatarImage src={task.assignee.avatar} />
                         <AvatarFallback className="text-xs">
-                          {task.assignee.initials}
+                          {task.assignee.charAt(0)}
                         </AvatarFallback>
                       </Avatar>
                       <span className="text-xs text-muted-foreground">
-                        {task.assignee.name}
+                        {task.assignee}
                       </span>
                     </div>
                     
