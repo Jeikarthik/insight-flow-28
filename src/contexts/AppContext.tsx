@@ -9,6 +9,7 @@ export interface Task {
   assignee: string;
   status: 'pending' | 'in-progress' | 'completed';
   type: 'document-processing' | 'review' | 'analysis';
+  completionNotes?: string;
 }
 
 export interface Document {
@@ -26,7 +27,7 @@ interface AppContextType {
   documents: Document[];
   addTask: (task: Omit<Task, 'id'>) => void;
   addDocument: (document: Omit<Document, 'id'>) => void;
-  updateTaskStatus: (taskId: string, status: Task['status']) => void;
+  updateTaskStatus: (taskId: string, status: Task['status'], completionNotes?: string) => void;
 }
 
 const AppContext = createContext<AppContextType | undefined>(undefined);
@@ -114,9 +115,9 @@ export function AppProvider({ children }: { children: ReactNode }) {
     setDocuments(prev => [newDocument, ...prev]);
   };
 
-  const updateTaskStatus = (taskId: string, status: Task['status']) => {
+  const updateTaskStatus = (taskId: string, status: Task['status'], completionNotes?: string) => {
     setTasks(prev => prev.map(task => 
-      task.id === taskId ? { ...task, status } : task
+      task.id === taskId ? { ...task, status, completionNotes } : task
     ));
   };
 
