@@ -34,32 +34,32 @@ function AppContent() {
   }
 
   return (
-    <BrowserRouter>
-      <Routes>
-        <Route path="/" element={<Index />} />
-        <Route path="/upload" element={<UploadPage />} />
-        <Route path="/tasks" element={<TasksPage />} />
-        <Route path="/documents" element={<DocumentsPage />} />
-        <Route path="/pending" element={<PendingPage />} />
-        <Route path="/team" element={<TeamPage />} />
-        <Route path="/chat" element={<ChatPage />} />
-        <Route path="/settings" element={<SettingsPage />} />
-        <Route path="*" element={<NotFound />} />
-      </Routes>
-    </BrowserRouter>
+    <AppProvider>
+      <BrowserRouter>
+        <Routes>
+          <Route path="/" element={<Index />} />
+          <Route path="/upload" element={<UploadPage />} />
+          <Route path="/tasks" element={<TasksPage />} />
+          <Route path="/documents" element={<DocumentsPage />} />
+          <Route path="/pending" element={<PendingPage />} />
+          <Route path="/team" element={<TeamPage />} />
+          <Route path="/chat" element={<ChatPage />} />
+          <Route path="/settings" element={<SettingsPage />} />
+          <Route path="*" element={<NotFound />} />
+        </Routes>
+      </BrowserRouter>
+    </AppProvider>
   );
 }
 
 const App = () => (
   <QueryClientProvider client={queryClient}>
     <AuthProvider>
-      <AppProvider>
-        <TooltipProvider>
-          <Toaster />
-          <Sonner />
-          <AppContent />
-        </TooltipProvider>
-      </AppProvider>
+      <TooltipProvider>
+        <Toaster />
+        <Sonner />
+        <AppContent />
+      </TooltipProvider>
     </AuthProvider>
   </QueryClientProvider>
 );
